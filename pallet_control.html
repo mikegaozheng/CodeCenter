@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>卡板配货控制面板</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --border: #334155;
+      --accent: #38bdf8;
+      --accent2: #22d3ee;
+      --text: #f1f5f9;
+      --text-dim: #94a3b8;
+      --danger: #f87171;
+      --success: #4ade80;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 24px;
+      font-size: 1.8rem;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 900px) {
+      .container { grid-template-columns: 1fr; }
+    }
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .panel-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .form-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+    .form-row > div {
+      flex: 1;
+      min-width: 80px;
+    }
+    label {
+      display: block;
+      font-size: 12px;
+      color: var(--text-dim);
+      margin-bottom: 4px;
+    }
+    input, select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+    }
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+    }
+    button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #0f172a;
+    }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(56, 189, 248, 0.3); }
+    .btn-danger {
+      background: linear-gradient(135deg, #f87171, #ef4444);
+      color: white;
+    }
+    .btn-danger:hover { transform: translateY(-1px); }
+    .btn-warning {
+      background: linear-gradient(135deg, #fbbf24, #f59e0b);
+      color: #0f172a;
+    }
+    .btn-warning:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3); }
+    .btn-small {
+      padding: 6px 12px;
+      font-size: 12px;
+    }
+    .list {
+      max-height: 300px;
+      overflow-y: auto;
+      margin-top: 12px;
+    }
+    .list-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px;
+      background: var(--bg);
+      border-radius: 8px;
+      margin-bottom: 8px;
+      border: 1px solid var(--border);
+    }
+    .list-item.active {
+      border-color: var(--accent);
+      background: rgba(56, 189, 248, 0.1);
+    }
+    .list-item-info {
+      flex: 1;
+    }
+    .list-item-title {
+      font-weight: 500;
+      color: var(--accent);
+    }
+    .list-item-meta {
+      font-size: 12px;
+      color: var(--text-dim);
+      margin-top: 4px;
+    }
+    .list-item-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .box-color {
+      width: 24px;
+      height: 24px;
+      border-radius: 4px;
+      border: 2px solid var(--border);
+      margin-right: 8px;
+    }
+    .color-palette {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+    .color-swatch {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: all 0.2s;
+    }
+    .color-swatch:hover, .color-swatch.active {
+      border-color: white;
+      transform: scale(1.1);
+    }
+    .info-bar {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .info-stat {
+      text-align: center;
+    }
+    .info-stat-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    .info-stat-label {
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      color: var(--text-dim);
+    }
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .tab {
+      padding: 8px 16px;
+      border-radius: 8px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .tab:hover {
+      border-color: var(--accent);
+    }
+    .tab.active {
+      background: var(--accent);
+      color: #0f172a;
+      border-color: var(--accent);
+    }
+    .indent {
+      margin-left: 20px;
+      border-left: 2px solid var(--border);
+      padding-left: 12px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🚚 卡板配货控制面板</h1>
+  
+  <div class="info-bar">
+    <div class="info-stat">
+      <div class="info-stat-value" id="stat-pallets">0</div>
+      <div class="info-stat-label">卡板数</div>
+    </div>
+    <div class="info-stat">
+      <div class="info-stat-value" id="stat-layers">0</div>
+      <div class="info-stat-label">总层数</div>
+    </div>
+    <div class="info-stat">
+      <div class="info-stat-value" id="stat-boxes">0</div>
+      <div class="info-stat-label">总箱数</div>
+    </div>
+    <button class="btn-danger" onclick="clearAll()">清空所有</button>
+  </div>
+
+  <div class="container">
+    <!-- 左侧：卡板和层管理 -->
+    <div class="panel">
+      <div class="panel-title">📦 卡板管理</div>
+      
+      <!-- 添加卡板 -->
+      <div class="form-row">
+        <div style="flex: 2">
+          <label>卡板名称</label>
+          <input id="pallet-name" type="text" placeholder="例如：卡板A" value="卡板1">
+        </div>
+        <div style="flex: 1; display: flex; align-items: flex-end;">
+          <button class="btn-primary" onclick="addPallet()" style="width: 100%;">添加卡板</button>
+        </div>
+      </div>
+      
+      <!-- 卡板列表 -->
+      <div class="list" id="pallet-list"></div>
+      
+      <!-- 层管理（选中卡板后显示） -->
+      <div id="layer-section" style="margin-top: 20px; display: none;">
+        <div class="panel-title">📚 层管理 - <span id="current-pallet-name"></span></div>
+        <div class="form-row">
+          <div>
+            <label>行数 (Z轴)</label>
+            <input id="layer-rows" type="number" min="1" max="10" value="2">
+          </div>
+          <div>
+            <label>列数 (X轴)</label>
+            <input id="layer-cols" type="number" min="1" max="10" value="4">
+          </div>
+          <div style="display: flex; align-items: flex-end;">
+            <button class="btn-primary" onclick="addLayer()" style="width: 100%;">添加层</button>
+          </div>
+        </div>
+        <div class="list indent" id="layer-list"></div>
+      </div>
+    </div>
+
+    <!-- 右侧：箱子管理 -->
+    <div class="panel">
+      <div class="panel-title">📦 箱子管理</div>
+      
+      <!-- 目标选择 -->
+      <div class="form-row">
+        <div style="flex: 1">
+          <label>目标卡板</label>
+          <select id="target-pallet" onchange="onTargetPalletChange()">
+            <option value="">-- 请先添加卡板 --</option>
+          </select>
+        </div>
+        <div style="flex: 1">
+          <label>目标层</label>
+          <select id="target-layer">
+            <option value="">-- 请先选择卡板 --</option>
+          </select>
+        </div>
+      </div>
+      
+      <!-- 箱子尺寸 -->
+      <div class="form-row">
+        <div>
+          <label>长度 (cm)</label>
+          <input id="box-length" type="number" min="1" max="120" value="30">
+        </div>
+        <div>
+          <label>宽度 (cm)</label>
+          <input id="box-width" type="number" min="1" max="100" value="25">
+        </div>
+        <div>
+          <label>高度 (cm)</label>
+          <input id="box-height" type="number" min="1" max="200" value="20">
+        </div>
+        <div>
+          <label>数量</label>
+          <input id="box-qty" type="number" min="1" max="100" value="1">
+        </div>
+      </div>
+      
+      <!-- 颜色选择 -->
+      <div>
+        <label>箱子颜色</label>
+        <div class="color-palette" id="color-palette"></div>
+        <input id="box-color" type="hidden" value="#4ade80">
+      </div>
+      
+      <div style="margin-top: 16px;">
+        <button class="btn-primary" onclick="addBox()" style="width: 100%;">添加箱子</button>
+      </div>
+      
+      <!-- 箱子列表 -->
+      <div class="list" id="box-list" style="margin-top: 16px;"></div>
+    </div>
+  </div>
+
+  <script>
+    // 颜色调色板
+    const COLORS = [
+      '#4ade80', '#22d3ee', '#38bdf8', '#818cf8', '#c084fc',
+      '#f472b6', '#fb7185', '#f87171', '#fb923c', '#fbbf24',
+      '#a3e635', '#34d399', '#2dd4bf', '#60a5fa', '#a78bfa'
+    ];
+    let currentColorIndex = 0;
+
+    // 数据结构
+    // pallets: [{ id, name, layers: [{ id, rows, cols }] }]
+    // boxes: [{ id, palletId, layerId, length, width, height, color, number }]
+    let pallets = [];
+    let boxes = [];
+    let selectedPalletId = null;
+    let boxCounter = 0;
+
+    // 初始化
+    function init() {
+      loadData();
+      renderColorPalette();
+      renderAll();
+    }
+
+    // 渲染颜色调色板
+    function renderColorPalette() {
+      const palette = document.getElementById('color-palette');
+      palette.innerHTML = COLORS.map((c, i) => 
+        `<div class="color-swatch ${i === 0 ? 'active' : ''}" 
+              style="background: ${c}" 
+              data-color="${c}"
+              onclick="selectColor('${c}', this)"></div>`
+      ).join('');
+    }
+
+    function selectColor(color, el) {
+      document.getElementById('box-color').value = color;
+      document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
+      el.classList.add('active');
+    }
+
+    function getNextColor() {
+      const color = COLORS[currentColorIndex % COLORS.length];
+      currentColorIndex++;
+      return color;
+    }
+
+    // 数据管理
+    function loadData() {
+      try {
+        const p = localStorage.getItem('pallet-data');
+        const b = localStorage.getItem('pallet-boxes-v2');
+        if (p) pallets = JSON.parse(p);
+        if (b) boxes = JSON.parse(b);
+        boxCounter = boxes.reduce((max, b) => Math.max(max, b.number || 0), 0);
+      } catch (e) {
+        console.warn('加载数据失败', e);
+      }
+    }
+
+    function saveData() {
+      try {
+        localStorage.setItem('pallet-data', JSON.stringify(pallets));
+        localStorage.setItem('pallet-boxes-v2', JSON.stringify(boxes));
+        // 触发 3D 页面更新（使用随机值确保每次都不同）
+        localStorage.setItem('pallet-update', Date.now().toString() + '_' + Math.random());
+        console.log('Data saved:', { pallets: pallets.length, boxes: boxes.length });
+      } catch (e) {
+        console.error('保存数据失败', e);
+      }
+    }
+
+    // 卡板管理
+    function addPallet() {
+      const name = document.getElementById('pallet-name').value.trim() || `卡板${pallets.length + 1}`;
+      const pallet = {
+        id: Date.now().toString(),
+        name,
+        layers: []
+      };
+      pallets.push(pallet);
+      document.getElementById('pallet-name').value = `卡板${pallets.length + 1}`;
+      saveData();
+      renderAll();
+      selectPallet(pallet.id);
+    }
+
+    function deletePallet(id) {
+      pallets = pallets.filter(p => p.id !== id);
+      boxes = boxes.filter(b => b.palletId !== id);
+      if (selectedPalletId === id) selectedPalletId = null;
+      saveData();
+      renderAll();
+    }
+
+    function selectPallet(id) {
+      selectedPalletId = id;
+      renderAll();
+    }
+
+    // 层管理
+    function addLayer() {
+      if (!selectedPalletId) {
+        alert('请先选择卡板');
+        return;
+      }
+      const pallet = pallets.find(p => p.id === selectedPalletId);
+      if (!pallet) return;
+
+      const rows = parseInt(document.getElementById('layer-rows').value) || 2;
+      const cols = parseInt(document.getElementById('layer-cols').value) || 4;
+      
+      const layer = {
+        id: Date.now().toString(),
+        rows,
+        cols,
+        name: `第${pallet.layers.length + 1}层`
+      };
+      pallet.layers.push(layer);
+      saveData();
+      renderAll();
+    }
+
+    function deleteLayer(palletId, layerId) {
+      const pallet = pallets.find(p => p.id === palletId);
+      if (!pallet) return;
+      pallet.layers = pallet.layers.filter(l => l.id !== layerId);
+      boxes = boxes.filter(b => b.layerId !== layerId);
+      saveData();
+      renderAll();
+    }
+
+    // 清除功能
+    function clearPalletBoxes(palletId) {
+      const pallet = pallets.find(p => p.id === palletId);
+      if (!pallet) return;
+      
+      const boxCount = boxes.filter(b => b.palletId === palletId).length;
+      if (boxCount === 0) {
+        alert('该卡板没有箱子');
+        return;
+      }
+      
+      if (!confirm(`确定清除卡板"${pallet.name}"的所有 ${boxCount} 个箱子吗？`)) return;
+      
+      boxes = boxes.filter(b => b.palletId !== palletId);
+      saveData();
+      renderAll();
+    }
+
+    function clearLayerBoxes(palletId, layerId) {
+      const pallet = pallets.find(p => p.id === palletId);
+      if (!pallet) return;
+      const layer = pallet.layers.find(l => l.id === layerId);
+      if (!layer) return;
+      
+      const boxCount = boxes.filter(b => b.layerId === layerId).length;
+      if (boxCount === 0) {
+        alert('该层没有箱子');
+        return;
+      }
+      
+      if (!confirm(`确定清除"${pallet.name}"的"${layer.name}"的所有 ${boxCount} 个箱子吗？`)) return;
+      
+      boxes = boxes.filter(b => b.layerId !== layerId);
+      saveData();
+      renderAll();
+    }
+
+    // 箱子管理
+    function addBox() {
+      const palletId = document.getElementById('target-pallet').value;
+      const layerId = document.getElementById('target-layer').value;
+      
+      if (!palletId) {
+        alert('请选择目标卡板');
+        return;
+      }
+      if (!layerId) {
+        alert('请选择目标层');
+        return;
+      }
+
+      // 获取层信息
+      const pallet = pallets.find(p => p.id === palletId);
+      if (!pallet) {
+        alert('卡板不存在');
+        return;
+      }
+      const layer = pallet.layers.find(l => l.id === layerId);
+      if (!layer) {
+        alert('层不存在');
+        return;
+      }
+
+      // 验证层容量
+      const maxCapacity = layer.rows * layer.cols;
+      const currentBoxCount = boxes.filter(b => b.layerId === layerId).length;
+      const qty = parseInt(document.getElementById('box-qty').value) || 1;
+      
+      if (currentBoxCount + qty > maxCapacity) {
+        alert(`该层最多只能放置 ${maxCapacity} 个箱子（${layer.rows}行 × ${layer.cols}列）\n当前已有 ${currentBoxCount} 个箱子，无法再添加 ${qty} 个`);
+        return;
+      }
+
+      const length = parseFloat(document.getElementById('box-length').value) || 30;
+      const width = parseFloat(document.getElementById('box-width').value) || 25;
+      const height = parseFloat(document.getElementById('box-height').value) || 20;
+      const color = document.getElementById('box-color').value || getNextColor();
+
+      // 验证尺寸
+      if (length > 120 || width > 100) {
+        alert('箱子尺寸超过卡板尺寸（120×100cm）');
+        return;
+      }
+
+      // 添加箱子
+      for (let i = 0; i < qty; i++) {
+        boxCounter++;
+        boxes.push({
+          id: Date.now().toString() + '_' + i,
+          palletId,
+          layerId,
+          length,
+          width,
+          height,
+          color: qty > 1 ? getNextColor() : color,
+          number: boxCounter
+        });
+      }
+
+      // 自动换颜色
+      const nextColorEl = document.querySelector(`.color-swatch[data-color="${getNextColor()}"]`);
+      if (nextColorEl) selectColor(getNextColor(), nextColorEl);
+
+      saveData();
+      renderAll();
+    }
+
+    function deleteBox(id) {
+      boxes = boxes.filter(b => b.id !== id);
+      saveData();
+      renderAll();
+    }
+
+    function clearAll() {
+      if (!confirm('确定清空所有数据？')) return;
+      pallets = [];
+      boxes = [];
+      selectedPalletId = null;
+      boxCounter = 0;
+      saveData();
+      renderAll();
+    }
+
+    // 目标选择变化
+    function onTargetPalletChange() {
+      const palletId = document.getElementById('target-pallet').value;
+      const layerSelect = document.getElementById('target-layer');
+      layerSelect.innerHTML = '<option value="">-- 请选择层 --</option>';
+      
+      if (palletId) {
+        const pallet = pallets.find(p => p.id === palletId);
+        if (pallet) {
+          pallet.layers.forEach(layer => {
+            const opt = document.createElement('option');
+            const maxCapacity = layer.rows * layer.cols;
+            const currentBoxCount = boxes.filter(b => b.layerId === layer.id).length;
+            const remaining = maxCapacity - currentBoxCount;
+            const status = remaining > 0 ? `剩余${remaining}` : '已满';
+            opt.value = layer.id;
+            opt.textContent = `${layer.name} (${layer.rows}×${layer.cols}, ${currentBoxCount}/${maxCapacity}, ${status})`;
+            // 如果已满，禁用该选项
+            if (remaining === 0) {
+              opt.disabled = true;
+              opt.style.color = '#64748b';
+            }
+            layerSelect.appendChild(opt);
+          });
+        }
+      }
+    }
+
+    // 渲染所有
+    function renderAll() {
+      renderPalletList();
+      renderLayerList();
+      renderBoxList();
+      renderTargetSelects();
+      updateStats();
+    }
+
+    function renderPalletList() {
+      const list = document.getElementById('pallet-list');
+      if (pallets.length === 0) {
+        list.innerHTML = '<div class="empty-state">暂无卡板，请添加</div>';
+        document.getElementById('layer-section').style.display = 'none';
+        return;
+      }
+
+      list.innerHTML = pallets.map(p => {
+        const layerCount = p.layers.length;
+        const boxCount = boxes.filter(b => b.palletId === p.id).length;
+        const isActive = p.id === selectedPalletId;
+        return `
+          <div class="list-item ${isActive ? 'active' : ''}" onclick="selectPallet('${p.id}')">
+            <div class="list-item-info">
+              <div class="list-item-title">${p.name}</div>
+              <div class="list-item-meta">${layerCount} 层 | ${boxCount} 箱</div>
+            </div>
+            <div class="list-item-actions" style="display: flex; gap: 6px;">
+              ${boxCount > 0 ? `<button class="btn-warning btn-small" onclick="event.stopPropagation(); clearPalletBoxes('${p.id}')" title="清除所有箱子">清空</button>` : ''}
+              <button class="btn-danger btn-small" onclick="event.stopPropagation(); deletePallet('${p.id}')" title="删除卡板">删除</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderLayerList() {
+      const section = document.getElementById('layer-section');
+      const list = document.getElementById('layer-list');
+      const nameSpan = document.getElementById('current-pallet-name');
+      
+      if (!selectedPalletId) {
+        section.style.display = 'none';
+        return;
+      }
+
+      const pallet = pallets.find(p => p.id === selectedPalletId);
+      if (!pallet) {
+        section.style.display = 'none';
+        return;
+      }
+
+      section.style.display = 'block';
+      nameSpan.textContent = pallet.name;
+
+      if (pallet.layers.length === 0) {
+        list.innerHTML = '<div class="empty-state" style="padding: 20px;">暂无层，请添加</div>';
+        return;
+      }
+
+      list.innerHTML = pallet.layers.map((layer, idx) => {
+        const boxCount = boxes.filter(b => b.layerId === layer.id).length;
+        return `
+          <div class="list-item">
+            <div class="list-item-info">
+              <div class="list-item-title">${layer.name}</div>
+              <div class="list-item-meta">${layer.rows}行 × ${layer.cols}列 | ${boxCount} 箱</div>
+            </div>
+            <div class="list-item-actions" style="display: flex; gap: 6px;">
+              ${boxCount > 0 ? `<button class="btn-warning btn-small" onclick="clearLayerBoxes('${pallet.id}', '${layer.id}')" title="清除该层所有箱子">清空</button>` : ''}
+              <button class="btn-danger btn-small" onclick="deleteLayer('${pallet.id}', '${layer.id}')" title="删除该层">删除</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderBoxList() {
+      const list = document.getElementById('box-list');
+      if (boxes.length === 0) {
+        list.innerHTML = '<div class="empty-state">暂无箱子</div>';
+        return;
+      }
+
+      // 按卡板和层分组显示
+      const grouped = {};
+      boxes.forEach(box => {
+        const key = `${box.palletId}_${box.layerId}`;
+        if (!grouped[key]) grouped[key] = [];
+        grouped[key].push(box);
+      });
+
+      let html = '';
+      for (const key in grouped) {
+        const boxList = grouped[key];
+        const firstBox = boxList[0];
+        const pallet = pallets.find(p => p.id === firstBox.palletId);
+        const layer = pallet?.layers.find(l => l.id === firstBox.layerId);
+        
+        html += `<div style="margin-bottom: 12px;">
+          <div style="font-size: 12px; color: var(--text-dim); margin-bottom: 8px;">
+            ${pallet?.name || '未知卡板'} → ${layer?.name || '未知层'}
+          </div>`;
+        
+        boxList.forEach(box => {
+          html += `
+            <div class="list-item" style="margin-left: 12px;">
+              <div style="display: flex; align-items: center;">
+                <div class="box-color" style="background: ${box.color}"></div>
+                <div class="list-item-info">
+                  <div class="list-item-title">#${box.number}</div>
+                  <div class="list-item-meta">${box.length}×${box.width}×${box.height} cm</div>
+                </div>
+              </div>
+              <button class="btn-danger btn-small" onclick="deleteBox('${box.id}')">删除</button>
+            </div>
+          `;
+        });
+        html += '</div>';
+      }
+
+      list.innerHTML = html;
+    }
+
+    function renderTargetSelects() {
+      const palletSelect = document.getElementById('target-pallet');
+      const currentPalletId = palletSelect.value;
+      
+      palletSelect.innerHTML = '<option value="">-- 请选择卡板 --</option>';
+      pallets.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = p.name;
+        if (p.id === currentPalletId) opt.selected = true;
+        palletSelect.appendChild(opt);
+      });
+
+      onTargetPalletChange();
+    }
+
+    function updateStats() {
+      document.getElementById('stat-pallets').textContent = pallets.length;
+      document.getElementById('stat-layers').textContent = pallets.reduce((sum, p) => sum + p.layers.length, 0);
+      document.getElementById('stat-boxes').textContent = boxes.length;
+    }
+
+    // 初始化
+    init();
+  </script>
+</body>
+</html>

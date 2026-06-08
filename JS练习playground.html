@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaScript 运行环境</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .section {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .section h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .code-editor {
+            width: 100%;
+            min-height: 200px;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            resize: vertical;
+            background: #f8f9fa;
+        }
+
+        .code-editor:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+            transition: background 0.3s;
+        }
+
+        .button:hover {
+            background: #5568d3;
+        }
+
+        .button:active {
+            transform: scale(0.98);
+        }
+
+        .output {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 5px;
+            min-height: 100px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            margin-top: 10px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-x: auto;
+        }
+
+        .output .log {
+            color: #4ec9b0;
+        }
+
+        .output .error {
+            color: #f48771;
+        }
+
+        .output .warn {
+            color: #dcdcaa;
+        }
+
+        .examples {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .example-btn {
+            background: #f0f0f0;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: left;
+        }
+
+        .example-btn:hover {
+            background: #e0e0e0;
+            border-color: #667eea;
+        }
+
+        .example-btn h3 {
+            color: #667eea;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .example-btn p {
+            color: #666;
+            font-size: 12px;
+        }
+
+        .info {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+
+        .info h3 {
+            color: #1976d2;
+            margin-bottom: 10px;
+        }
+
+        .info ul {
+            margin-left: 20px;
+            color: #555;
+        }
+
+        .info li {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 JavaScript 运行环境</h1>
+
+        <div class="info">
+            <h3>📖 使用说明</h3>
+            <ul>
+                <li>在下方代码编辑器中编写 JavaScript 代码</li>
+                <li>点击"运行代码"按钮执行代码</li>
+                <li>使用 <code>console.log()</code> 输出结果到控制台</li>
+                <li>也可以点击示例按钮快速体验</li>
+                <li>打开浏览器开发者工具（F12）查看详细日志</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>📝 代码编辑器</h2>
+            <textarea id="codeEditor" class="code-editor" placeholder="在这里输入你的 JavaScript 代码...">// 示例：输出 Hello World
+console.log('Hello, World!');
+console.log('当前时间:', new Date().toLocaleString());
+
+// 示例：计算
+let a = 10;
+let b = 20;
+console.log(`${a} + ${b} = ${a + b}`);
+
+// 示例：数组操作
+let arr = [1, 2, 3, 4, 5];
+console.log('数组:', arr);
+console.log('数组总和:', arr.reduce((sum, n) => sum + n, 0));</textarea>
+            <button class="button" onclick="runCode()">▶️ 运行代码</button>
+            <button class="button" onclick="clearOutput()" style="background: #f44336; margin-left: 10px;">🗑️ 清空输出</button>
+        </div>
+
+        <div class="section">
+            <h2>📤 输出结果</h2>
+            <div id="output" class="output">等待运行代码...</div>
+        </div>
+
+        <div class="section">
+            <h2>💡 快速示例</h2>
+            <div class="examples">
+                <div class="example-btn" onclick="loadExample('hello')">
+                    <h3>Hello World</h3>
+                    <p>基础输出示例</p>
+                </div>
+                <div class="example-btn" onclick="loadExample('calculator')">
+                    <h3>计算器</h3>
+                    <p>数学运算示例</p>
+                </div>
+                <div class="example-btn" onclick="loadExample('array')">
+                    <h3>数组操作</h3>
+                    <p>数组方法示例</p>
+                </div>
+                <div class="example-btn" onclick="loadExample('function')">
+                    <h3>函数</h3>
+                    <p>函数定义和调用</p>
+                </div>
+                <div class="example-btn" onclick="loadExample('expression')">
+                    <h3>表达式</h3>
+                    <p>二元 & 三目表达式示例</p>
+                </div>
+                <div class="example-btn" onclick="loadExample('dom')">
+                    <h3>DOM 操作</h3>
+                    <p>操作页面元素</p>
+                </div>
+                <div class="example-btn" onclick="loadExample('async')">
+                    <h3>异步操作</h3>
+                    <p>Promise 和 async/await</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 保存原始的 console 方法
+        const originalLog = console.log;
+        const originalError = console.error;
+        const originalWarn = console.warn;
+
+        // 输出容器
+        const outputDiv = document.getElementById('output');
+        const codeEditor = document.getElementById('codeEditor');
+
+        // 重写 console 方法以在页面上显示
+        function setupConsole() {
+            console.log = function(...args) {
+                originalLog.apply(console, args);
+                const message = args.map(arg => {
+                    if (typeof arg === 'object') {
+                        return JSON.stringify(arg, null, 2);
+                    }
+                    return String(arg);
+                }).join(' ');
+                outputDiv.innerHTML += `<div class="log">[LOG] ${message}</div>`;
+            };
+
+            console.error = function(...args) {
+                originalError.apply(console, args);
+                const message = args.map(arg => String(arg)).join(' ');
+                outputDiv.innerHTML += `<div class="error">[ERROR] ${message}</div>`;
+            };
+
+            console.warn = function(...args) {
+                originalWarn.apply(console, args);
+                const message = args.map(arg => String(arg)).join(' ');
+                outputDiv.innerHTML += `<div class="warn">[WARN] ${message}</div>`;
+            };
+        }
+
+        // 运行代码
+        function runCode() {
+            outputDiv.innerHTML = '';
+            setupConsole();
+            
+            const code = codeEditor.value;
+            
+            try {
+                // 使用 eval 执行代码（注意：在实际生产环境中要谨慎使用）
+                eval(code);
+            } catch (error) {
+                console.error('执行错误:', error.message);
+                console.error('错误堆栈:', error.stack);
+            }
+        }
+
+        // 清空输出
+        function clearOutput() {
+            outputDiv.innerHTML = '等待运行代码...';
+        }
+
+        // 加载示例代码
+        function loadExample(type) {
+            const examples = {
+                hello: `// Hello World 示例
+console.log('Hello, World!');
+console.log('欢迎使用 JavaScript 运行环境！');
+console.log('当前时间:', new Date().toLocaleString());`,
+
+                calculator: `// 计算器示例
+function add(a, b) {
+    return a + b;
+}
+
+function multiply(a, b) {
+    return a * b;
+}
+
+let num1 = 15;
+let num2 = 25;
+
+console.log(\`\${num1} + \${num2} = \${add(num1, num2)}\`);
+console.log(\`\${num1} × \${num2} = \${multiply(num1, num2)}\`);
+console.log(\`\${num1}² = \${Math.pow(num1, 2)}\`);`,
+
+                array: `// 数组操作示例
+let fruits = ['苹果', '香蕉', '橙子', '葡萄'];
+
+console.log('原始数组:', fruits);
+console.log('数组长度:', fruits.length);
+console.log('第一个元素:', fruits[0]);
+console.log('最后一个元素:', fruits[fruits.length - 1]);
+
+// 数组方法
+let numbers = [1, 2, 3, 4, 5];
+console.log('数字数组:', numbers);
+console.log('总和:', numbers.reduce((sum, n) => sum + n, 0));
+console.log('平均值:', numbers.reduce((sum, n) => sum + n, 0) / numbers.length);
+console.log('最大值:', Math.max(...numbers));
+console.log('最小值:', Math.min(...numbers));
+
+// 映射
+let doubled = numbers.map(n => n * 2);
+console.log('每个数乘以2:', doubled);
+
+// 过滤
+let evens = numbers.filter(n => n % 2 === 0);
+console.log('偶数:', evens);`,
+
+                function: `// 函数示例
+// 普通函数
+function greet(name) {
+    return \`你好, \${name}!\`;
+}
+
+// 箭头函数
+const add = (a, b) => a + b;
+
+// 高阶函数
+function createMultiplier(multiplier) {
+    return function(number) {
+        return number * multiplier;
+    };
+}
+
+console.log(greet('JavaScript'));
+console.log('5 + 3 =', add(5, 3));
+
+const double = createMultiplier(2);
+const triple = createMultiplier(3);
+console.log('10 的两倍:', double(10));
+console.log('10 的三倍:', triple(10));`,
+
+                expression: `// 表达式示例
+let x = 8;
+let y = 3;
+let z = -2;
+
+// 二元表达式
+console.log('x + y =', x + y);
+console.log('x - y =', x - y);
+console.log('x * y =', x * y);
+console.log('x / y =', (x / y).toFixed(2));
+console.log('x % y =', x % y);
+
+// 幂运算
+console.log('x ** 2 =', x ** 2);
+
+// 逻辑表达式
+console.log('x > y && y > z =>', x > y && y > z);
+console.log('x < y || z < 0 =>', x < y || z < 0);
+
+// 三目表达式
+const max = x > y ? x : y;
+console.log('x 和 y 的较大值:', max);
+
+const state = z >= 0 ? '非负数' : '负数';
+console.log('z 的状态:', state);
+
+// 组合表达式
+const result = (x + y) * (z < 0 ? -z : z);
+console.log('组合表达式结果:', result);`,
+
+                dom: `// DOM 操作示例
+console.log('页面标题:', document.title);
+console.log('当前URL:', window.location.href);
+
+// 创建元素
+const div = document.createElement('div');
+div.textContent = '这是动态创建的元素！';
+div.style.color = '#667eea';
+div.style.padding = '10px';
+div.style.border = '2px solid #667eea';
+div.style.borderRadius = '5px';
+div.style.marginTop = '10px';
+
+// 添加到页面
+document.body.appendChild(div);
+
+console.log('已创建并添加新元素到页面！');
+
+// 查找元素
+const outputDiv = document.getElementById('output');
+console.log('输出区域元素:', outputDiv ? '找到' : '未找到');`,
+
+                async: `// 异步操作示例
+console.log('开始异步操作...');
+
+// Promise 示例
+function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function asyncExample() {
+    console.log('步骤 1: 开始');
+    await delay(500);
+    console.log('步骤 2: 等待 500ms 后');
+    await delay(500);
+    console.log('步骤 3: 再等待 500ms 后');
+    console.log('完成！');
+}
+
+asyncExample();
+
+// Fetch API 示例（如果支持）
+if (typeof fetch !== 'undefined') {
+    console.log('Fetch API 可用');
+    // 注意：实际请求需要有效的 URL
+    // fetch('https://api.github.com')
+    //     .then(response => response.json())
+    //     .then(data => console.log('API 数据:', data))
+    //     .catch(error => console.error('请求错误:', error));
+} else {
+    console.log('Fetch API 不可用');
+}`
+            };
+
+            if (examples[type]) {
+                codeEditor.value = examples[type];
+            }
+        }
+
+        // 页面加载时设置控制台
+        setupConsole();
+    </script>
+</body>
+</html>
+

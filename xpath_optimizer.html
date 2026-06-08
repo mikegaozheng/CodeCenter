@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XPath 优化工具</title>
+    <style>
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --success: #00ff9c;
+            --danger: #ff5478;
+            --bg-dark: #1a1a2e;
+            --bg-card: #16213e;
+            --text-light: #eaeaea;
+            --text-muted: #a0a0a0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--text-light);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .main-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: bold;
+            font-size: 1em;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            font-family: inherit;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .btn {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            width: 100%;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .result-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            margin-top: 20px;
+            display: none;
+        }
+
+        .result-card.show {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .result-header h2 {
+            color: #333;
+            font-size: 1.5em;
+        }
+
+        .copy-btn {
+            background: var(--success);
+            color: white;
+            padding: 8px 16px;
+            font-size: 0.9em;
+            border-radius: 6px;
+        }
+
+        .copy-btn:hover {
+            background: #00cc7a;
+        }
+
+        .xpath-result {
+            background: #f5f5f5;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 1.1em;
+            color: #333;
+            word-break: break-all;
+            position: relative;
+        }
+
+        .xpath-result::before {
+            content: 'XPath:';
+            display: block;
+            font-size: 0.8em;
+            color: #666;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        .explanation {
+            background: #e3f2fd;
+            border-left: 4px solid var(--primary);
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+            color: #333;
+        }
+
+        .explanation h3 {
+            color: var(--primary);
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 30px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #ffebee;
+            border-left: 4px solid var(--danger);
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+            color: #c62828;
+            display: none;
+        }
+
+        .error.show {
+            display: block;
+        }
+
+        .tag-selector {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .tag-option {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+            color: #333;
+        }
+
+        .tag-option:hover {
+            border-color: var(--primary);
+            background: #f0f0ff;
+        }
+
+        .tag-option.active {
+            border-color: var(--primary);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+        }
+
+        .help-text {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 XPath 优化工具</h1>
+            <p>输入网址和目标标签，AI 将为您生成最稳定的 XPath 表达式</p>
+        </div>
+
+        <div class="main-card">
+            <form id="xpath-form">
+                <div class="form-group">
+                    <label for="url">🌐 目标网址</label>
+                    <input 
+                        type="url" 
+                        id="url" 
+                        name="url" 
+                        placeholder="https://example.com/page"
+                        required
+                    >
+                    <div class="help-text">请输入完整的网页地址（包含 http:// 或 https://）</div>
+                </div>
+
+                <div class="form-group">
+                    <label>🎯 目标标签识别方式</label>
+                    <div class="tag-selector">
+                        <div class="tag-option active" data-type="text">
+                            <strong>文本内容</strong>
+                            <div style="font-size: 0.8em; margin-top: 5px;">通过文本匹配</div>
+                        </div>
+                        <div class="tag-option" data-type="xpath">
+                            <strong>当前 XPath</strong>
+                            <div style="font-size: 0.8em; margin-top: 5px;">优化现有 XPath</div>
+                        </div>
+                        <div class="tag-option" data-type="selector">
+                            <strong>CSS 选择器</strong>
+                            <div style="font-size: 0.8em; margin-top: 5px;">通过选择器定位</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group" id="target-input-group">
+                    <label for="target">目标标签内容</label>
+                    <textarea 
+                        id="target" 
+                        name="target" 
+                        placeholder="请输入目标元素的文本内容、XPath 或 CSS 选择器..."
+                        required
+                    ></textarea>
+                    <div class="help-text" id="help-text">请输入目标元素的文本内容</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="api-key">🔑 API Key（可选）</label>
+                    <input 
+                        type="text" 
+                        id="api-key" 
+                        name="api-key" 
+                        placeholder="留空则使用默认配置"
+                    >
+                    <div class="help-text">如需使用自定义 API Key，请在此输入</div>
+                </div>
+
+                <button type="submit" class="btn btn-primary" id="submit-btn">
+                    🚀 开始分析
+                </button>
+            </form>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p style="color: #333;">正在分析网页结构，请稍候...</p>
+            </div>
+
+            <div class="error" id="error"></div>
+        </div>
+
+        <div class="result-card" id="result-card">
+            <div class="result-header">
+                <h2>✨ 优化结果</h2>
+                <button class="btn copy-btn" id="copy-btn">📋 复制 XPath</button>
+            </div>
+            
+            <div class="xpath-result" id="xpath-result"></div>
+            
+            <div class="explanation" id="explanation">
+                <h3>💡 优化说明</h3>
+                <p id="explanation-text"></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('xpath-form');
+        const targetInput = document.getElementById('target');
+        const helpText = document.getElementById('help-text');
+        const tagOptions = document.querySelectorAll('.tag-option');
+        const loading = document.getElementById('loading');
+        const error = document.getElementById('error');
+        const resultCard = document.getElementById('result-card');
+        const xpathResult = document.getElementById('xpath-result');
+        const explanationText = document.getElementById('explanation-text');
+        const copyBtn = document.getElementById('copy-btn');
+        const submitBtn = document.getElementById('submit-btn');
+
+        let currentType = 'text';
+
+        // 切换识别方式
+        tagOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                tagOptions.forEach(opt => opt.classList.remove('active'));
+                option.classList.add('active');
+                currentType = option.dataset.type;
+                
+                const label = document.querySelector('#target-input-group label');
+                const placeholder = targetInput.placeholder;
+                
+                switch(currentType) {
+                    case 'text':
+                        label.textContent = '目标标签内容';
+                        targetInput.placeholder = '请输入目标元素的文本内容...';
+                        helpText.textContent = '请输入目标元素的文本内容';
+                        break;
+                    case 'xpath':
+                        label.textContent = '当前 XPath';
+                        targetInput.placeholder = '例如: //div[@class="content"]/p[1]';
+                        helpText.textContent = '请输入需要优化的 XPath 表达式';
+                        break;
+                    case 'selector':
+                        label.textContent = 'CSS 选择器';
+                        targetInput.placeholder = '例如: .content > p:first-child';
+                        helpText.textContent = '请输入 CSS 选择器表达式';
+                        break;
+                }
+            });
+        });
+
+        // 表单提交
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const url = document.getElementById('url').value;
+            const target = targetInput.value;
+            const apiKey = document.getElementById('api-key').value;
+
+            if (!url || !target) {
+                showError('请填写完整的网址和目标标签信息');
+                return;
+            }
+
+            // 显示加载状态
+            loading.classList.add('show');
+            error.classList.remove('show');
+            resultCard.classList.remove('show');
+            submitBtn.disabled = true;
+
+            try {
+                // 检测是否在本地文件模式（file://）还是服务器模式（http://）
+                const apiUrl = window.location.protocol === 'file:' 
+                    ? 'http://localhost:5000/api/optimize-xpath'
+                    : '/api/optimize-xpath';
+                
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        url: url,
+                        target: target,
+                        type: currentType,
+                        api_key: apiKey || undefined
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || '请求失败');
+                }
+
+                // 显示结果
+                xpathResult.textContent = data.xpath;
+                explanationText.textContent = data.explanation || 'AI 已为您生成最稳定的 XPath 表达式';
+                resultCard.classList.add('show');
+                
+            } catch (err) {
+                showError(err.message || '分析失败，请检查网络连接或稍后重试');
+            } finally {
+                loading.classList.remove('show');
+                submitBtn.disabled = false;
+            }
+        });
+
+        // 复制功能
+        copyBtn.addEventListener('click', () => {
+            const text = xpathResult.textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                copyBtn.textContent = '✅ 已复制';
+                setTimeout(() => {
+                    copyBtn.textContent = '📋 复制 XPath';
+                }, 2000);
+            });
+        });
+
+        function showError(message) {
+            error.textContent = message;
+            error.classList.add('show');
+        }
+    </script>
+</body>
+</html>

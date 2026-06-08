@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Knight rider KITT</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #000000;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* 扫描灯容器 - 加宽灯带 */
+        .scanner-container {
+            position: relative;
+            width: 1600px;
+            height: 180px;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 90px;
+            overflow: hidden;
+            box-shadow: 
+                inset 0 4px 20px rgba(0, 0, 0, 0.8),
+                0 0 40px rgba(255, 0, 0, 0.2);
+        }
+
+        /* 扫描灯背景光效 */
+        .scanner-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 90px;
+        }
+
+        /* 灯块容器 - 加宽 */
+        .light-segments {
+            position: absolute;
+            top: 35px;
+            left: 50px;
+            right: 50px;
+            height: 110px;
+            display: flex;
+            gap: 8px;
+            justify-content: space-between;
+        }
+
+        /* 单个灯块 - 方形设计 */
+        .light-segment {
+            flex: 1;
+            height: 100%;
+            width: 30px;
+            background: rgba(255, 0, 0, 0.15);
+            border-radius: 4px;
+            position: relative;
+            box-shadow: 
+                inset 0 0 20px rgba(0, 0, 0, 0.5),
+                0 0 10px rgba(255, 0, 0, 0.2);
+            transition: all 0.1s ease;
+        }
+
+        /* 灯块发光效果 */
+        .light-segment::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 0, 0, 0);
+            border-radius: 4px;
+            transition: background 0.2s ease;
+        }
+
+        /* 中心灯点 */
+        .light-segment::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 8px;
+            height: 8px;
+            background: rgba(255, 0, 0, 0.3);
+            border-radius: 50%;
+            transition: all 0.2s ease;
+            box-shadow: 0 0 5px rgba(255, 0, 0, 0.3);
+        }
+
+        /* 灯块激活状态 - 放大一倍 */
+        .light-segment.active {
+            background: rgba(255, 0, 0, 0.4);
+            box-shadow: 
+                0 0 30px rgba(255, 0, 0, 0.8),
+                0 0 60px rgba(255, 0, 0, 0.6),
+                0 0 90px rgba(255, 0, 0, 0.4),
+                inset 0 0 30px rgba(255, 255, 255, 0.3),
+                inset 0 0 10px rgba(255, 0, 0, 0.8);
+        }
+
+        .light-segment.active::before {
+            background: rgba(255, 0, 0, 0.9);
+        }
+
+        .light-segment.active::after {
+            width: 12px;
+            height: 12px;
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 
+                0 0 15px rgba(255, 0, 0, 1),
+                0 0 30px rgba(255, 0, 0, 0.8),
+                0 0 45px rgba(255, 0, 0, 0.6);
+        }
+
+        /* 呼吸灯效果 - 所有灯块轻微闪烁 */
+        .light-segment {
+            animation: breathe 2s ease-in-out infinite;
+        }
+
+        @keyframes breathe {
+            0%, 100% {
+                opacity: 0.6;
+            }
+            50% {
+                opacity: 1;
+            }
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 1800px) {
+            .scanner-container {
+                width: 90%;
+                max-width: 1600px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 扫描灯容器 -->
+        <div class="scanner-container">
+            <!-- 背景 -->
+            <div class="scanner-bg"></div>
+            
+            <!-- 灯块容器 -->
+            <div class="light-segments" id="lightSegments">
+                <!-- 灯块将通过 JavaScript 动态生成 -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 创建灯块 - 增加数量以保持比例
+        const lightSegments = document.getElementById('lightSegments');
+        const segmentCount = 60; // 灯块数量（加宽后增加数量）
+        
+        // 创建所有灯块
+        for (let i = 0; i < segmentCount; i++) {
+            const segment = document.createElement('div');
+            segment.className = 'light-segment';
+            segment.style.animationDelay = `${i * 0.05}s`;
+            lightSegments.appendChild(segment);
+        }
+
+        // 音效生成函数 - 创建 KITT 扫描音效
+        let audioContext;
+        let oscillator;
+        let gainNode;
+        let isPlaying = false;
+        let currentOscillator = null;
+
+        function initAudio() {
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                gainNode = audioContext.createGain();
+                gainNode.connect(audioContext.destination);
+                gainNode.gain.value = 0.12; // 音量控制
+            } catch (e) {
+                console.log('音频上下文初始化失败:', e);
+            }
+        }
+
+        function playScanSound(frequency, duration, scanDirection = 1) {
+            if (!audioContext) return;
+            
+            try {
+                // 如果已有振荡器在运行，先停止它
+                if (currentOscillator) {
+                    try {
+                        currentOscillator.stop();
+                    } catch (e) {}
+                }
+                
+                currentOscillator = audioContext.createOscillator();
+                const oscGain = audioContext.createGain();
+                
+                // 使用更复杂的波形来模拟 KITT 扫描音
+                currentOscillator.type = 'sawtooth'; // 锯齿波更接近原声
+                currentOscillator.frequency.value = frequency;
+                
+                // 连接：振荡器 -> 增益 -> 主增益 -> 输出
+                currentOscillator.connect(oscGain);
+                oscGain.connect(gainNode);
+                
+                // 创建扫频效果（从低到高或从高到低）
+                const startFreq = frequency;
+                const endFreq = scanDirection === 1 ? frequency + 150 : frequency - 150;
+                const startTime = audioContext.currentTime;
+                
+                // 添加淡入淡出效果，使音效更平滑
+                oscGain.gain.setValueAtTime(0, startTime);
+                oscGain.gain.linearRampToValueAtTime(0.3, startTime + 0.01);
+                oscGain.gain.linearRampToValueAtTime(0.3, startTime + duration - 0.01);
+                oscGain.gain.linearRampToValueAtTime(0, startTime + duration);
+                
+                currentOscillator.frequency.setValueAtTime(startFreq, startTime);
+                currentOscillator.frequency.linearRampToValueAtTime(endFreq, startTime + duration);
+                
+                currentOscillator.start(startTime);
+                currentOscillator.stop(startTime + duration);
+                
+                currentOscillator.onended = () => {
+                    currentOscillator = null;
+                };
+            } catch (e) {
+                console.log('音效播放失败:', e);
+            }
+        }
+
+        // 初始化音频
+        //initAudio();
+
+        // 扫描动画函数
+        function scanLights() {
+            const segments = document.querySelectorAll('.light-segment');
+            let currentIndex = 0;
+            let direction = 1; // 1 = 从左到右, -1 = 从右到左
+            let lastSoundTime = 0;
+            
+            function activateNext() {
+                // 先重置所有灯块的透明度和激活状态
+                segments.forEach((seg, index) => {
+                    seg.classList.remove('active');
+                    seg.style.opacity = '';
+                });
+                
+                // 激活当前灯块（最亮）
+                if (segments[currentIndex]) {
+                    segments[currentIndex].classList.add('active');
+                    segments[currentIndex].style.opacity = '1';
+                }
+                
+                // 激活前一个灯块（较暗）
+                if (currentIndex > 0 && segments[currentIndex - 1]) {
+                    segments[currentIndex - 1].classList.add('active');
+                    segments[currentIndex - 1].style.opacity = '0.7';
+                }
+                
+                // 激活后一个灯块（较暗）
+                if (currentIndex < segments.length - 1 && segments[currentIndex + 1]) {
+                    segments[currentIndex + 1].classList.add('active');
+                    segments[currentIndex + 1].style.opacity = '0.7';
+                }
+                
+                // 激活更远的灯块（更暗，形成渐变效果）
+                if (currentIndex > 1 && segments[currentIndex - 2]) {
+                    segments[currentIndex - 2].classList.add('active');
+                    segments[currentIndex - 2].style.opacity = '0.4';
+                }
+                if (currentIndex < segments.length - 2 && segments[currentIndex + 2]) {
+                    segments[currentIndex + 2].classList.add('active');
+                    segments[currentIndex + 2].style.opacity = '0.4';
+                }
+                
+                // 播放扫描音效（连续播放，形成流畅的扫描音）
+                const now = Date.now();
+                if (now - lastSoundTime > 15) { // 更频繁的音效更新
+                    const progress = currentIndex / segments.length;
+                    // 频率随位置变化，模拟扫描效果
+                    const baseFreq = 250 + (progress * 300); // 250-550Hz 范围
+                    playScanSound(baseFreq, 0.08, direction);
+                    lastSoundTime = now;
+                }
+                
+                // 更新索引
+                currentIndex += direction;
+                
+                // 到达边界时改变方向
+                if (currentIndex >= segments.length) {
+                    direction = -1;
+                    currentIndex = segments.length - 2;
+                    // 播放转向音效（更明显的音调变化）
+                    if (audioContext) {
+                        playScanSound(600, 0.12, -1);
+                    }
+                } else if (currentIndex < 0) {
+                    direction = 1;
+                    currentIndex = 1;
+                    // 播放转向音效（更明显的音调变化）
+                    if (audioContext) {
+                        playScanSound(600, 0.12, 1);
+                    }
+                }
+            }
+            
+            // 加快扫描速度 - 从 80ms 改为 50ms
+            setInterval(activateNext, 50);
+        }
+
+        // 启动扫描动画
+        scanLights();
+    </script>
+</body>
+</html>
+

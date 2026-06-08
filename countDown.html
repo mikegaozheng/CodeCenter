@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>矩阵风倒计时</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --matrix-green: #00ff9c;
+        --matrix-dark: #020a05;
+        --matrix-mid: #041d11;
+        --accent: #0aff5c;
+        --danger: #ff5478;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+        min-height: 100vh;
+        background: radial-gradient(circle at top, #021b0d 0%, #010602 50%, #000 100%);
+        color: var(--matrix-green);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 32px;
+        overflow: hidden;
+      }
+
+      body::before,
+      body::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-image: repeating-linear-gradient(
+          180deg,
+          rgba(0, 255, 156, 0.12) 0px,
+          rgba(0, 255, 156, 0.12) 2px,
+          transparent 2px,
+          transparent 4px
+        );
+        animation: fall 12s linear infinite;
+        pointer-events: none;
+      }
+
+      body::after {
+        animation-duration: 18s;
+        opacity: 0.35;
+        filter: blur(1px);
+      }
+
+      @keyframes fall {
+        from {
+          transform: translateY(-100%);
+        }
+        to {
+          transform: translateY(100%);
+        }
+      }
+
+      #matrix-canvas {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        opacity: 0.5;
+        mix-blend-mode: screen;
+      }
+
+      main {
+        width: min(720px, 100%);
+        background: rgba(0, 0, 0, 0.72);
+        border: 1px solid rgba(0, 255, 156, 0.24);
+        border-radius: 18px;
+        padding: 32px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.65), 0 0 60px rgba(0, 255, 156, 0.2);
+        position: relative;
+        backdrop-filter: blur(12px);
+      }
+
+      header {
+        text-align: center;
+        margin-bottom: 32px;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(28px, 4vw, 40px);
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+      }
+
+      p {
+        color: rgba(0, 255, 156, 0.7);
+        margin: 12px 0 0;
+        font-size: 14px;
+        letter-spacing: 0.1em;
+      }
+
+      .countdown {
+        font-size: clamp(48px, 9vw, 96px);
+        text-align: center;
+        margin: 24px 0 40px;
+        letter-spacing: 0.15em;
+        text-shadow: 0 0 15px rgba(0, 255, 156, 0.5);
+      }
+
+      form {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+      }
+
+      label {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        text-transform: uppercase;
+        font-size: 12px;
+        letter-spacing: 0.1em;
+      }
+
+      input {
+        background: rgba(0, 255, 156, 0.08);
+        border: 1px solid rgba(0, 255, 156, 0.4);
+        border-radius: 8px;
+        padding: 10px;
+        color: var(--matrix-green);
+        font-size: 18px;
+        font-family: inherit;
+        text-align: center;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      input:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 12px rgba(0, 255, 156, 0.4);
+      }
+
+      button {
+        width: 100%;
+        padding: 14px;
+        border-radius: 10px;
+        border: none;
+        font-size: 16px;
+        font-family: inherit;
+        cursor: pointer;
+        text-transform: uppercase;
+        letter-spacing: 0.2em;
+        transition: transform 0.15s ease, box-shadow 0.2s ease;
+      }
+
+      .primary {
+        background: linear-gradient(120deg, #00ff9c, #0aff5c);
+        color: #04210f;
+        box-shadow: 0 10px 20px rgba(0, 255, 156, 0.4);
+      }
+
+      .primary:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+        box-shadow: none;
+      }
+
+      .primary:not(:disabled):active {
+        transform: translateY(1px);
+      }
+
+      .controls {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 12px;
+        margin-top: 12px;
+      }
+
+      .secondary {
+        background: rgba(0, 255, 156, 0.12);
+        color: var(--matrix-green);
+        border: 1px solid rgba(0, 255, 156, 0.3);
+      }
+
+      .secondary:hover:not(:disabled) {
+        box-shadow: inset 0 0 0 1px rgba(0, 255, 156, 0.4);
+      }
+
+      .secondary.danger {
+        border-color: rgba(255, 84, 120, 0.5);
+        color: var(--danger);
+      }
+
+      .chip-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 12px;
+      }
+
+      .chip {
+        padding: 8px 16px;
+        border-radius: 999px;
+        border: 1px solid rgba(0, 255, 156, 0.4);
+        color: var(--matrix-green);
+        background: rgba(0, 255, 156, 0.08);
+        cursor: pointer;
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        transition: background 0.2s ease, transform 0.2s ease;
+      }
+
+      .chip:hover {
+        background: rgba(0, 255, 156, 0.2);
+        transform: translateY(-1px);
+      }
+
+      .status {
+        text-align: center;
+        min-height: 24px;
+        letter-spacing: 0.08em;
+        color: rgba(0, 255, 156, 0.85);
+      }
+
+      footer {
+        margin-top: 32px;
+        font-size: 12px;
+        text-align: center;
+        color: rgba(0, 255, 156, 0.5);
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="matrix-canvas"></canvas>
+    <main>
+      <header>
+        <h1>COUNTDOWN MATRIX</h1>
+        <p>输入时长，启动倒计时，静待零刻</p>
+      </header>
+
+      <section aria-live="polite" class="countdown" id="countdown-display">00:00:00</section>
+
+      <form id="time-form">
+        <label>
+          Hours
+          <input type="number" id="hours" min="0" max="23" value="0" />
+        </label>
+        <label>
+          Minutes
+          <input type="number" id="minutes" min="0" max="59" value="0" />
+        </label>
+        <label>
+          Seconds
+          <input type="number" id="seconds" min="0" max="59" value="10" />
+        </label>
+        <button type="submit" class="primary" id="start-btn">启动倒计时</button>
+      </form>
+
+      <div class="chip-row" id="preset-row">
+        <div class="chip" data-seconds="60">01:00</div>
+        <div class="chip" data-seconds="300">05:00</div>
+        <div class="chip" data-seconds="600">10:00</div>
+        <div class="chip" data-seconds="1800">30:00</div>
+      </div>
+
+      <div class="controls">
+        <button class="secondary" id="pause-btn" disabled>暂停</button>
+        <button class="secondary danger" id="reset-btn" disabled>重置</button>
+      </div>
+
+      <div class="status" id="status-text">准备就绪</div>
+
+      <footer>NEO CLOCK // MATRIX INSPIRED // 2025</footer>
+    </main>
+
+    <script>
+      const display = document.getElementById("countdown-display");
+      const statusText = document.getElementById("status-text");
+      const form = document.getElementById("time-form");
+      const startBtn = document.getElementById("start-btn");
+      const pauseBtn = document.getElementById("pause-btn");
+      const resetBtn = document.getElementById("reset-btn");
+      const inputs = {
+        hours: document.getElementById("hours"),
+        minutes: document.getElementById("minutes"),
+        seconds: document.getElementById("seconds"),
+      };
+      const presetRow = document.getElementById("preset-row");
+      const matrixCanvas = document.getElementById("matrix-canvas");
+      const matrixCtx = matrixCanvas.getContext("2d");
+      const matrixChars = "01コネクション未来λΣΨ矩阵SYSTEM".split("");
+      const fontSize = 16;
+      let fallSpeed = fontSize * 0.9;
+      let matrixDrops = [];
+
+      const resizeMatrix = () => {
+        matrixCanvas.width = window.innerWidth;
+        matrixCanvas.height = window.innerHeight;
+        const columns = Math.ceil(matrixCanvas.width / fontSize);
+        matrixDrops = Array.from({ length: columns }, () => Math.random() * matrixCanvas.height);
+      };
+
+      const drawMatrix = () => {
+        matrixCtx.fillStyle = "rgba(0, 0, 0, 0.08)";
+        matrixCtx.fillRect(0, 0, matrixCanvas.width, matrixCanvas.height);
+        matrixCtx.fillStyle = "rgba(0, 255, 156, 0.65)";
+        matrixCtx.font = `${fontSize}px "IBM Plex Mono", monospace`;
+        matrixDrops.forEach((y, column) => {
+          const text = matrixChars[Math.floor(Math.random() * matrixChars.length)];
+          const x = column * fontSize;
+          matrixCtx.fillText(text, x, y);
+          if (y > matrixCanvas.height && Math.random() > 0.975) {
+            matrixDrops[column] = 0;
+          } else {
+            matrixDrops[column] = y + fallSpeed;
+          }
+        });
+        requestAnimationFrame(drawMatrix);
+      };
+
+      resizeMatrix();
+      drawMatrix();
+      window.addEventListener("resize", resizeMatrix);
+
+      let countdownTimer = null;
+      let remainingMs = 0;
+      let isPaused = false;
+      let audioCtx = null;
+
+      const ensureAudioContext = () => {
+        const Ctor = window.AudioContext || window.webkitAudioContext;
+        if (!Ctor) return null;
+        if (!audioCtx) {
+          audioCtx = new Ctor();
+        }
+        if (audioCtx.state === "suspended") {
+          audioCtx.resume();
+        }
+        return audioCtx;
+      };
+
+      const beepSequence = () => {
+        const ctx = ensureAudioContext();
+        if (!ctx) return;
+        const baseTime = ctx.currentTime + 0.05;
+        for (let i = 0; i < 3; i += 1) {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          const start = baseTime + i * 0.25;
+          osc.type = "square";
+          osc.frequency.setValueAtTime(880, start);
+          gain.gain.setValueAtTime(0.001, start);
+          gain.gain.linearRampToValueAtTime(0.25, start + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.001, start + 0.18);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(start);
+          osc.stop(start + 0.2);
+        }
+      };
+
+      const format = (ms) => {
+        const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+        const hrs = String(Math.floor(totalSeconds / 3600)).padStart(2, "0");
+        const mins = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, "0");
+        const secs = String(totalSeconds % 60).padStart(2, "0");
+        return `${hrs}:${mins}:${secs}`;
+      };
+
+      const setStatus = (msg) => {
+        statusText.textContent = msg;
+      };
+
+      const stopTimer = () => {
+        clearInterval(countdownTimer);
+        countdownTimer = null;
+      };
+
+      const resetUIState = () => {
+        stopTimer();
+        remainingMs = 0;
+        isPaused = false;
+        display.textContent = "00:00:00";
+        setStatus("准备就绪");
+        startBtn.disabled = false;
+        pauseBtn.disabled = true;
+        resetBtn.disabled = true;
+      };
+
+      const tick = () => {
+        remainingMs -= 1000;
+        display.textContent = format(remainingMs);
+
+        if (remainingMs <= 0) {
+          stopTimer();
+          display.textContent = "00:00:00";
+          setStatus("倒计时结束 ⚡");
+          beepSequence();
+          startBtn.disabled = false;
+          pauseBtn.disabled = true;
+          resetBtn.disabled = false;
+        }
+      };
+
+      const startCountdown = (durationMs) => {
+        if (durationMs <= 0) {
+          setStatus("请输入大于 0 的时长");
+          return;
+        }
+        ensureAudioContext();
+        remainingMs = durationMs;
+        display.textContent = format(remainingMs);
+        setStatus("倒计时运行中...");
+        startBtn.disabled = true;
+        pauseBtn.disabled = false;
+        resetBtn.disabled = false;
+        countdownTimer = setInterval(tick, 1000);
+      };
+
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const hours = Number(inputs.hours.value) || 0;
+        const minutes = Number(inputs.minutes.value) || 0;
+        const seconds = Number(inputs.seconds.value) || 0;
+        const totalMs = (hours * 3600 + minutes * 60 + seconds) * 1000;
+        stopTimer();
+        isPaused = false;
+        startCountdown(totalMs);
+      });
+
+      pauseBtn.addEventListener("click", () => {
+        if (!countdownTimer && !isPaused) return;
+        if (isPaused) {
+          countdownTimer = setInterval(tick, 1000);
+          setStatus("倒计时继续...");
+          pauseBtn.textContent = "暂停";
+          isPaused = false;
+          return;
+        }
+        stopTimer();
+        isPaused = true;
+        setStatus("已暂停");
+        pauseBtn.textContent = "继续";
+      });
+
+      resetBtn.addEventListener("click", () => {
+        resetUIState();
+        pauseBtn.textContent = "暂停";
+      });
+
+      presetRow.addEventListener("click", (event) => {
+        const chip = event.target.closest("[data-seconds]");
+        if (!chip) return;
+        const presetSeconds = Number(chip.dataset.seconds);
+        inputs.hours.value = Math.floor(presetSeconds / 3600);
+        inputs.minutes.value = Math.floor((presetSeconds % 3600) / 60);
+        inputs.seconds.value = presetSeconds % 60;
+        chip.classList.add("active");
+        setTimeout(() => chip.classList.remove("active"), 300);
+        stopTimer();
+        isPaused = false;
+        startCountdown(presetSeconds * 1000);
+      });
+
+      resetUIState();
+    </script>
+  </body>
+</html>
+
+

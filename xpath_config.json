@@ -1,0 +1,7 @@
+{
+  "power_api_url": "https://power-api.yingdao.com/oapi/power/v1/rest/flow/12b4db3e-43cf-4cf2-a520-f68205623b44/execute",
+  "power_api_token": "AP_Tdvgn24JBhG9BDS3",
+  "timeout": 30,
+  "max_retries": 3,
+  "comment": "power_api_token 可写成 “Bearer xxx” 或直接填 token；也可用环境变量 POWER_API_TOKEN"
+}
